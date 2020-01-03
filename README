@@ -1,0 +1,85 @@
+############################
+ @author lidehe
+ Dec 25,2019
+############################
+
+
+- 项目说明：
+    本项目用于将{hdfs}中的数据转换成{HFile-HBase File}
+    各个组件版本
+        Hadoop 3.1.3
+        Spark 2.2.2
+        Hbase 2.2.2
+        Hive 3.1.2
+
+- 使用方式
+    1)Java工程配置 config.properties文件，java工程使用
+        配置规则：
+            1、表名_columnFamily
+                HBase表的列族需要事先在HBase建好。
+
+            2、表名_qualifiers=REQ_ID,SEQ_NO,PRIORITY,WARN_LEVEL,CHANNEL,ORGAN,TRAN_TYPE,OPERATE_CODE,OPERATE_DESC,TRADE_TIME,KAFAKA_TIME,STORM_TIME,TIME_STAMP,QUESTION,ANSWER,IF_SUCCESS,FAIL_REASON,ACC_RST_CODE,ACC_RST_DESC,ACC_RST_TIME,IS_QUERIED,REMARK,COUNTRY,ORGANIZATION_ID,IS_HIT,IP,TXN_DEVICE,CUR_AUTH_MODE,RCV_BANK,RCV_BRANCH,RCV_NAME,RCV_ACC_NO,SESSION_ID,TRN_TYPE,TRN_AMT,TRN_TIME,OPEN_ACC_TIME,OPT_AUTH_MODE,CST_NO,SUM_MONEY,LIMIT_AMT_DAY,LIMIT_AMT,TERM,FREE_AMT,CTF_NO,CTF_TYPE,PAYER_ACC,PAYER_BALANCE,CORE_CST_NO,BATCH_NUM,TERM_ID,IS_SET_QUESTION,PHONE_NO,CST_NAME,AREA,PROVINCE,LARGEDELAY,DELAYNO,ORGNO,POST_ACTION,IF_RELEASE,TERMINAL,REACT_RESULT_CODE,REACT_RESULT_NAME,RELEASE_KEY_ID,STRATEGY_ID_HIT,IS_RISK,STATUS
+               HBase列族的修饰词，即导出表的列。
+                请注意，一定要把row_key放在第一列。一定要与导出时SELECT的列数、顺序一致，以防止值错位
+
+            3、表名_delimiter=,
+                列分隔符，需要与导出数据时指定的分隔符一致
+
+            4、表名_inputFile=hdfs://master:9000/hinput/{table_names}/{date}/{table_names}.txt
+                待转换的文件的位置,特别注意，文件名字、路径需要与上传hdfs的一致
+
+            5、表名_outputFile=hdfs://master:9000/hdata/{table_names}/{date}
+                转换后文件的存放位置
+
+            6、表名_zkQuorum=10.204.145.155,10.204.145.156,10.204.145.157
+                zookeeper集群主机的IP地址,逗号分割
+
+            7、表名_zkPort=2181
+                zookeeper提供服务的端口号
+
+
+    2)Java工程配置
+        拷贝集群的core-site.xml  hdfs-site.xml hive-site.xml yarn-site.xml文件到resource目录下
+
+
+    3)部署脚本配置export_{table_names}-env.sh
+        配置规则：
+            1、时间间隔
+                # 导出数据起始日期相对于传入参数日期的间隔，比如传入脚本日期为20191101，并设置month=2，那么导出的数据的起始日期就是20190901
+                # 如果想按天，则写为 day=正整数
+                # 如果不指定，默认为一个月
+                month=1
+
+            2、#数据库 host
+                host=x.x.x.x
+
+            3、# 连接用户名
+                user=xxxx
+
+            4、# 连接密码
+                password=xxxx
+
+            5、# 数据库名字
+                database=xxxxx
+
+            6、# 数据库端口号，MySQL必须填写，db2择机而定
+                port=3306
+
+             7、# 导出文件的列分隔符
+                delimiter=,
+
+            8、# sql语句
+                语句中如果涉及采集数据的起止日期，请一定要用 date_begin 作为起始，date_end 作为截至，例如
+                statement=select 列表 from {table_names} where xx > date_begin and xx < date_end;
+                特别注意，此处的 列表要与 config.properties文件中的 “表名_qualifiers” 一致
+
+    3)部署环境：
+        为保证程序正常执行，需要满足以下几点：
+            1、程序部署在HBase集群的节点上
+            2、程序部署的节点上需要有DB2或者MySQL客户端(具体取决于从哪个数据源导出用于转换的数据)。如果没有，则上传HDFS文件的过程需要另行先完成，程序会默认文件已经上传HDFS并调用Java程序进行map转换。如执行程序前没有先行上传文件，则报错。
+
+    4)执行命令：
+         sh export.sh 数据库类型(db2|mysql) 表名 数据日期
+         其中 指导出数据的截至日期，同时也是生成的文件日期
+
+

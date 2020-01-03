@@ -1,0 +1,1 @@
+export to rrms_result.txt of del modified by codepage=1383 select * from rrms_result;
