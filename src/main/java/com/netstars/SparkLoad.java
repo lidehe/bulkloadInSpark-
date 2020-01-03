@@ -48,7 +48,7 @@ public class SparkLoad implements Serializable {
         JavaRDD<String> rdd = sc.textFile(inputPath);
         JavaPairRDD<ImmutableBytesWritable, KeyValue> flatMapToPair = rdd.mapToPair(record -> {
             return new Tuple2<>(record.split(delimiter)[0], record);
-        }).reduceByKey((pre, next) -> {
+        }).reduceByKey((pre, next) -> {// 这两步去重，把要去重的字段map成key，再reduceByKey就好了
             return next;
         }).map(result -> {
             return result._2;
